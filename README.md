@@ -15,17 +15,17 @@ flip horizontal, and multi-scale training.I think I achieve a good result when I
 --------------
 ### Get code
 '''
-git clone https://github.com/xuzheyuan624/yolov3-pytorch.git
+git clone https://github.com/xuzheyuan624/yolov3-pytorch.git<br>
 cd yolov3-pytorch
 '''
 ### Download COCO dataset and COCO APi
 '''
-cd data
+cd data<br>
 bash get_coco_dataset.sh
 '''
 ### Download Pascal VOC dataset
 '''
-cd data
-bash get_voc_dataset.sh
+cd data<br>
+bash get_voc_dataset.sh<br>
 python voc_label.py
 '''
