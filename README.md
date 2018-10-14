@@ -29,3 +29,8 @@ cd data
 bash get_voc_dataset.sh
 python voc_label.py
 ```
+##Training
+-------------------------
+1.Download the pretrained darknet weights from [Google Drive]() or [Baidu Yun Drive]() and move it to ```weights```<br>
+2.Set up parameters in ```config.py```or```main.py``` <br>
+3
