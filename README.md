@@ -14,18 +14,18 @@ flip horizontal, and multi-scale training.I think I achieve a good result when I
 ## Installation
 --------------
 ### Get code
-'''
-git clone https://github.com/xuzheyuan624/yolov3-pytorch.git<br>
+```
+git clone https://github.com/xuzheyuan624/yolov3-pytorch.git
 cd yolov3-pytorch
-'''
+```
 ### Download COCO dataset and COCO APi
-'''
-cd data<br>
+```
+cd data
 bash get_coco_dataset.sh
-'''
+```
 ### Download Pascal VOC dataset
-'''
-cd data<br>
-bash get_voc_dataset.sh<br>
+```
+cd data
+bash get_voc_dataset.sh
 python voc_label.py
-'''
+```
