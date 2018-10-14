@@ -13,17 +13,17 @@ flip horizontal, and multi-scale training** in ```data_transform.py```.I think I
 
 ## Installation
 --------------
-### Get code
+#### Get code
 ```
 git clone https://github.com/xuzheyuan624/yolov3-pytorch.git
 cd yolov3-pytorch
 ```
-### Download COCO dataset and COCO APi
+#### Download COCO dataset and COCO APi
 ```
 cd data
 bash get_coco_dataset.sh
 ```
-### Download Pascal VOC dataset
+#### Download Pascal VOC dataset
 ```
 cd data
 bash get_voc_dataset.sh
@@ -33,4 +33,7 @@ python voc_label.py
 -------------------------
 1.Download the pretrained darknet weights from [Google Drive]() or [Baidu Yun Drive]() and move it to ```weights```<br>
 2.Set up parameters in ```config.py```or```main.py``` <br>
-3
+#### Start training
+```
+python main.py train --name=coco
+```
