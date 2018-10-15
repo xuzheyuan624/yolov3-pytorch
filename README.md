@@ -41,3 +41,4 @@ For training, each epoch trains on 117264 images from the train and validate COC
 #### Image Augmentation
 ```data_transfrom```shows many image augmentation, but the most effective augmentation is random cropping and multi-scale training, here is some examples for random cropping.<br>
 ![example 1](https://github.com/xuzheyuan624/yolov3-pytorch/blob/master/demo/step0_0.jpg)
+![example 2](https://github.com/xuzheyuan624/yolov3-pytorch/blob/master/demo/step0_1.jpg)
