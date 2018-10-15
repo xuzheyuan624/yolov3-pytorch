@@ -61,4 +61,10 @@ Use COCO APi to calculate mAP
 ```
 python main.py eval --name==coco
 ```
+#### Some results
+**Model**|**mAP(0.5)**|
+---------|------------|
+YOLOv3(paper)(416x416)|55.3|
+YOLOv3(this implement)(416x416)|52.9|
+
 
