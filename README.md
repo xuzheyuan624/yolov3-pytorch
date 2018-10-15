@@ -73,7 +73,7 @@ You can test a image by:
 ```python main.py test --name=coco --image=test/test3.jpg```
 ![prediction](https://github.com/xuzheyuan624/yolov3-pytorch/blob/master/prediction.jpg)<br>
 #### demo
-You can alse detect a video or run a real-time detection
+You can alse detect a video or run a real-time detection by 
 ```python main.py demo --name=coco --video=path```
 if ```video=None```, it's a real-time detection
 
