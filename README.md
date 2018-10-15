@@ -67,4 +67,10 @@ python main.py eval --name==coco
 YOLOv3(paper)(416x416)|55.3|
 YOLOv3(this implement)(416x416)|52.9|
 
+## Inference
+#### test 
+You can test a image by:
+```python main.py test --name=coco --image=test/test3.jpg```
+
+
 
