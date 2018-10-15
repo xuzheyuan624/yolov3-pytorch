@@ -31,7 +31,7 @@ python voc_label.py
 ```
 ## Training
 -------------------------
-1.Download the pretrained darknet weights from [Google Drive]() or [Baidu Yun Drive]() and move it to ```weights```<br>
+1.Download the pretrained darknet weights from [Google Drive]() or [Baidu Yun Drive](https://pan.baidu.com/s/18gwGWI11xMXlZvqvUPEhBQ) and move it to ```weights```<br>
 2.Set up parameters in ```config.py```or```main.py``` <br>
 #### Start training
 ```
@@ -50,4 +50,8 @@ global step | image size |
 4000 - 8000 |  ((0, 3) + 13) * 32 |
 8000 - 12000 | ((0, 5) + 12) * 32 |
 12000 - 16000 | ((0, 7) + 11) * 32 |
-16000 -     | ((0, 9) + 10) * 32   
+16000 -     | ((0, 9) + 10) * 32 |
+
+## Evaluate
+You can download the official weights from [Google Drive]() or [Baidu Yun Drive](https://pan.baidu.com/s/1Cr29v8L8i54sRjN6Cj3bqg) and put it in ```weights```<br>
+Also you can use the weights trained by yourself just by 
