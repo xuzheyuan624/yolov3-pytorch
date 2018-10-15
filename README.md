@@ -71,6 +71,7 @@ YOLOv3(this implement)(416x416)|52.9|
 #### test 
 You can test a image by:
 ```python main.py test --name=coco --image=test/test3.jpg```
+![prediction](https://github.com/xuzheyuan624/yolov3-pytorch/blob/master/prediction.jpg)
 
 
 
