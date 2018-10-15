@@ -37,7 +37,7 @@ python voc_label.py
 ```
 python main.py train --name=coco
 ```
-For training, each epoch trains on 117264 images from the train and validate COCO sets, and test on 4954 images from COCO dataset (**some images are lost :(**) 
+For training, each epoch trains on 117264 images from the train and validate COCO sets, and test on 4954 images from COCO dataset (**some images are lost :(**) .I have trained for 25 epochs by freezing the darknet layers and got mAP(0.5) = 0.33, it's not good but I think training all layers for 160 epochs will solve this problem.
 #### Image Augmentation
 ```data_transfrom```shows many image augmentation, but the most effective augmentation is random cropping and multi-scale training, here is some examples for random cropping.<br>
 ![example 1](https://github.com/xuzheyuan624/yolov3-pytorch/blob/master/demo/step0_0.jpg)
