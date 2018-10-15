@@ -54,4 +54,11 @@ global step | image size |
 
 ## Evaluate
 You can download the official weights from [Google Drive]() or [Baidu Yun Drive](https://pan.baidu.com/s/1Cr29v8L8i54sRjN6Cj3bqg) and put it in ```weights```<br>
-Also you can use the weights trained by yourself just by 
+Also you can use the weights trained by yourself just by modifying the path of weights in ```main.py``` or ```config.py```
+<br>
+#### Start evaluating
+Use COCO APi to calculate mAP
+```
+python main.py eval --name==coco
+```
+
