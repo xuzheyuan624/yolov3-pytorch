@@ -238,11 +238,19 @@ class Mode():
                 if detections is not None:
                     origin_size = eval(origin_sizes[idx])
                     detections = detections.cpu().numpy()
+                    dim_diff = np.abs(origin_size[0] - origin_size[1])
+                    pad1, pad2 = dim_diff // 2, dim_diff - dim_diff // 2
+                    pad = ((pad1, pad2), (0, 0)) if origin_size[1] <= origin_size[0] else ((0, 0), (pad1, pad2))
+                    scale = origin_size[0] if origin_size[1] <= origin_size[0] else origin_size[1]
                     for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-                        x1 = x1 / self.config.image_size * origin_size[0]
-                        x2 = x2 / self.config.image_size * origin_size[0]
-                        y1 = y1 / self.config.image_size * origin_size[1]
-                        y2 = y2 / self.config.image_size * origin_size[1]
+                        x1 = x1 / self.config.image_size * scale
+                        x2 = x2 / self.config.image_size * scale
+                        y1 = y1 / self.config.image_size * scale
+                        y2 = y2 / self.config.image_size * scale
+                        x1 -= pad[1][0]
+                        y1 -= pad[0][0]
+                        x2 -= pad[1][0]
+                        y2 -= pad[0][0]
                         w = x2 - x1
                         h = y2 - y1
                         coco_result.append({
