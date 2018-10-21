@@ -65,7 +65,10 @@ python main.py eval --name==coco
 **Model**|**mAP(0.5)**|
 ---------|------------|
 YOLOv3(paper)(416x416)|55.3|
-YOLOv3(this implement)(416x416)|52.9|
+YOLOv3(paper)(608x608)|57.9|
+YOLOv3(this implement)(416x416)|53.9|
+YOLOv3(this implement)(608x608)|56.5|
+
 
 ## Inference
 #### test 
