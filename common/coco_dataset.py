@@ -40,6 +40,7 @@ class COCODataset(Dataset):
             self.transforms.add(data_transforms.Crop(self.jitter))
             self.transforms.add(data_transforms.Flip(self.max_num))
         # self.transforms.add(data_transforms.KeepAspect())
+        self.aspect = data_transforms.KeepAspect()
         self.resize = data_transforms.ResizeImage()
         self.toTensor = data_transforms.ToTensor(self.max_objects)
 
@@ -76,6 +77,7 @@ class COCODataset(Dataset):
         if self.transforms is not None and self.is_training:
             sample = self.transforms(sample)
         
+        sample = self.aspect(sample)
         sample = self.resize(sample, self.img_size)
         sample = self.toTensor(sample)
         sample["image_path"] = img_path
