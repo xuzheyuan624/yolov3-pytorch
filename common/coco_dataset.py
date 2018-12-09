@@ -42,6 +42,7 @@ class COCODataset(Dataset):
         # self.transforms.add(data_transforms.KeepAspect())
         self.aspect = data_transforms.KeepAspect()
         self.resize = data_transforms.ResizeImage()
+        self.aspect_resize = data_transforms.KeepAspectResize()
         self.toTensor = data_transforms.ToTensor(self.max_objects)
 
     def __getitem__(self, index):

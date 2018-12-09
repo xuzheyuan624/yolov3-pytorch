@@ -72,7 +72,8 @@ def evaluate(config, name):
     if name == 'coco':
         model.eval_coco(val_dataloader)
     elif name == 'voc':
-        model.eval_voc(val_dataloader)
+        classes = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
+        model.eval_voc(val_dataloader, classes)
 
 
 

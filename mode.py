@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 import json
 from json import encoder
 encoder.FLOAT_REPR = lambda o: format(o, '.2f')
-
+import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -18,7 +18,7 @@ from tensorboardX import SummaryWriter
 from config import Config
 from nets.model import Model
 from nets.yolo_loss import YOLOLoss
-from common.utils import non_max_suppression
+from common.utils import non_max_suppression, bbox_iou
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
@@ -35,7 +35,10 @@ class Mode():
         self.config = config
         self.is_training = is_training
         self.net = Model(self.config, is_training=self.is_training)
-        self.net.train(is_training)
+        if self.is_training:
+            self.net.train(is_training)
+        else:
+            self.net.eval()
         self.net.init_weights()
         if self.is_training:
             self.optimizer = self._get_optimizer()
@@ -231,7 +234,7 @@ class Mode():
                 for i in range(3):
                     output_list.append(self.yolo_loss[i](outputs[i]))
                 output = torch.cat(output_list, 1)
-                batch_detections = non_max_suppression(output, self.config.num_classes, conf_thres=0.01, nms_thres=0.4)
+                batch_detections = non_max_suppression(output, self.config.num_classes, conf_thres=0.001, nms_thres=0.45)
             for idx, detections in enumerate(batch_detections):
                 image_id = int(os.path.basename(image_paths[idx])[-16:-4])
                 coco_img_ids.add(image_id)
@@ -240,7 +243,7 @@ class Mode():
                     detections = detections.cpu().numpy()
                     dim_diff = np.abs(origin_size[0] - origin_size[1])
                     pad1, pad2 = dim_diff // 2, dim_diff - dim_diff // 2
-                    pad = ((pad1, pad2), (0, 0)) if origin_size[1] <= origin_size[0] else ((0, 0), (pad1, pad2))
+                    pad = ((pad1, pad2), (0, 0), (0, 0)) if origin_size[1] <= origin_size[0] else ((0, 0), (pad1, pad2), (0, 0))
                     scale = origin_size[0] if origin_size[1] <= origin_size[0] else origin_size[1]
                     for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
                         x1 = x1 / self.config.image_size * scale
@@ -274,8 +277,10 @@ class Mode():
         cocoEval.accumulate()
         cocoEval.summarize()
 
-    def eval_voc(self, val_dataset):
+    def eval_voc(self, val_dataset, classes, iou_thresh=0.5):
         logging.info('Start Evaling')
+        results = {}
+
         
         def voc_ap(rec, prec, use_07_metric=False):
             """ ap = voc_ap(rec, prec, [use_07_metric])
@@ -313,46 +318,139 @@ class Mode():
                 ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
 
             return ap
+
+        def caculate_ap(correct, conf, pred_cls, total, classes):
+            correct, conf, pred_cls = np.array(correct), np.array(conf), np.array(pred_cls)
+            index = np.argsort(-conf)
+            correct, conf, pred_cls = correct[index], conf[index], pred_cls[index]
+
+            ap = []
+            AP = {}
+            for i, c in enumerate(classes):
+                k = pred_cls == i
+                n_gt = total[c]
+                n_p = sum(k)
+
+                if n_gt == 0 and n_p == 0:
+                    continue
+                elif n_p == 0 or n_gt == 0:
+                    ap.append(0)
+                    AP[c] = 0
+                else:
+                    fpc = np.cumsum(1 - correct[k])
+                    tpc = np.cumsum(correct[k])
+
+                    rec = tpc / n_gt
+                    prec = tpc / (tpc + fpc)
+                    
+                    _ap = voc_ap(rec, prec)
+                    ap.append(_ap)
+                    AP[c] = _ap
+            mAP = np.array(ap).mean()
+            return mAP, AP
+
+
         
-        def parse_rec(imagename):
+        def parse_rec(imagename, classes):
             filename = imagename.replace('jpg', 'xml')
             tree = ET.parse(filename)
             objects = []
             for obj in tree.findall('object'):
-                obj_struct = {}
-                obj_struct['pose'] = obj.fine('pose').text()
-                obj_struct['truncated'] = int(obj.find('truncated').text)
-                obj_struct['difficult'] = int(obj.find('difficult').text)
-                bbox = obj.find('bndbox')
-                obj_struct['bbox'] = [int(bbox.find('xmin').text),
-                                      int(bbox.find('ymin').text),
-                                      int(bbox.find('xmax').text),
-                                      int(bbox.find('ymax').text)]
-                objects.append(obj_struct)
-            return objects
+                difficult = obj.find('difficult').text
+                cls = obj.find('name').text
+                if cls not in classes or int(difficult) == 1:
+                    continue
+                cls_id = classes.index(cls)
+                xmlbox = obj.find('bndbox')
+                obj = [float(xmlbox.find('xmin').text), 
+                       float(xmlbox.find('xmax').text), 
+                       float(xmlbox.find('ymin').text), 
+                       float(xmlbox.find('ymax').text), cls_id]
+                objects.append(obj)
+            return np.asarray(objects)
 
 
+        total = {}
+        for cls in classes:
+            total[cls] = 0
+
+        correct = []
+        conf_list = []
+        pred_list = []
         for step, samples in enumerate(val_dataset):
             images, labels = samples['image'], samples['label']
             image_paths, origin_sizes = samples['image_path'], samples['origin_size']
+
+            logging.info("Now have finished [%.3d/%.3d]"%(step, len(val_dataset)))
             with torch.no_grad():
                 outputs = self.net(images)
                 output_list = []
                 for i in range(3):
-                    output_list.append(self.yolo_loss[i](outputs[i], labels))
+                    output_list.append(self.yolo_loss[i](outputs[i]))
                 output = torch.cat(output_list, 1)
-                batch_detections = non_max_suppression(output, self.config.num_classes, conf_thres=0.01, nms_thres=0.4)
+                batch_detections = non_max_suppression(output, self.config.num_classes, conf_thres=0.001, nms_thres=0.4)
+            
             for idx, detections in enumerate(batch_detections):
-                image_id = int(os.path.basename(image_paths[idx])[:6])
-                if detections is not None:
-                    origin_size = eval(origin_sizes[idx])
-                    detections = detections.cpu().numpy()
-                    for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-                        x1 = x1 / self.config.image_size * origin_size[0]
-                        x2 = x2 / self.config.image_size * origin_size[0]
-                        y1 = y1 / self.config.image_size * origin_size[1]
-                        y2 = y2 / self.config.image_size * origin_size[1]
+                image_path = image_paths[idx]
+                label = labels[idx]
+                for t in range(label.size(0)):
+                    if label[t, :].sum() == 0:
+                        label = label[:t, :]
+                        break
+                label_cls = np.array(label[:, 0])
+                for cls_id in label_cls:
+                    total[classes[int(cls_id)]] += 1
+                if detections is None:
+                    if label.size(0) != 0:
+                        label_cls = np.unique(label_cls)
+                        for cls_id in label_cls:
+                            correct.append(0)
+                            conf_list.append(1)
+                            pred_list.append(int(cls_id))
+                    continue
+                if label.size(0) == 0:
+                    for *pred_box, conf, cls_conf, cls_pred in detections:
+                        correct.append(0)
+                        conf_list.append(conf)
+                        pred_list.append(int(cls_pred))
+                else:
+                    detections = detections[np.argsort(-detections[:, 4])]
+                    detected = []
+                    
+                    for *pred_box, conf, cls_conf, cls_pred in detections:
+                        pred_box = torch.FloatTensor(pred_box).view(1, -1)
+                        pred_box[:, 2:] = pred_box[:, 2:] - pred_box[:, :2]
+                        pred_box[:, :2] = pred_box[:, :2] + pred_box[:, 2:] / 2
+                        pred_box = pred_box / self.config.image_size
+                        ious = bbox_iou(pred_box, label[:, 1:])
+                        best_i = np.argmax(ious)
+                        if ious[best_i] > iou_thresh and int(cls_pred) == int(label[best_i, 0]) and best_i not in detected:
+                            correct.append(1)
+                            detected.append(best_i)
+                        else:
+                            correct.append(0)
+                        pred_list.append(int(cls_pred))
+                        conf_list.append(float(conf))
 
+        results['correct'] = correct
+        results['conf'] = conf_list
+        results['pred_cls'] = pred_list
+        results['total'] = total
+        with open('results.json', 'w') as f:
+            json.dump(results, f)
+            logging.info('Having saved to results.json')
+
+        logging.info('Begin calculating....')
+        with open('results.json', 'r') as result_file:
+            results = json.load(result_file)
+
+        mAP, AP_class = caculate_ap(correct=results['correct'], conf=results['conf'], pred_cls=results['pred_cls'], total=results['total'], classes=classes)
+        logging.info('mAP(IoU=0.5):{:.1f}'.format(mAP * 100))
+
+
+
+
+            
 
 
 

@@ -108,6 +108,39 @@ class KeepAspect(object):
 
         return {'image': image_new, 'label': label}
 
+class KeepAspectResize(object):
+    def __init__(self, interpolation=cv2.INTER_LINEAR):
+        self.interpolation = interpolation
+
+    def __call__(self, sample, img_size):
+        image, label = sample['image'], sample['label']
+        h, w, _ = image.shape
+        new_size = tuple((int(img_size), int(img_size * h / w))) if h < w else tuple((int(img_size * w / h), int(img_size)))
+        image_resize = cv2.resize(image, new_size, interpolation=self.interpolation)
+        dim_diff = np.abs(new_size[0] - new_size[1])
+        pad1, pad2 = dim_diff // 2, dim_diff - dim_diff // 2
+        pad = ((pad1, pad2), (0, 0), (0, 0)) if new_size[1] <= new_size[0] else ((0, 0), (pad1, pad2), (0, 0))
+        image_new = np.pad(image_resize, pad, 'constant', constant_values=127.5)
+        padded_h, padded_w, _ = image_new.shape
+
+        x1 = new_size[0] * (label[:, 1] - label[:, 3]/2)
+        x2 = new_size[0] * (label[:, 1] + label[:, 3]/2)
+        y1 = new_size[1] * (label[:, 2] - label[:, 4]/2)
+        y2 = new_size[1] * (label[:, 2] + label[:, 4]/2)
+
+        x1 += pad[1][0]
+        y1 += pad[0][0]
+        x2 += pad[1][0]
+        y2 += pad[0][0]
+
+        label[:, 1] = ((x1 + x2) / 2) / padded_w
+        label[:, 2] = ((y1 + y2) / 2) / padded_h
+        label[:, 3] *= new_size[0] / padded_w
+        label[:, 4] *= new_size[1] / padded_h
+
+        return {'image': image_new, 'label': label}
+
+
 class ResizeImage(object):
     def __init__(self, interpolation=cv2.INTER_LINEAR):
         self.interpolation = interpolation
