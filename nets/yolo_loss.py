@@ -69,17 +69,18 @@ class YOLOLoss(nn.Module):
             return output.data
         
         else:
-            n_obj, mask, noobj_mask, tx, ty, tw, th, tconf, tcls = self.get_target(targets, scaled_anchors,
+            n_obj, mask, noobj_mask, tx, ty, tw, th, tconf, tcls, scales = self.get_target(targets, scaled_anchors,
                                                                            in_w, in_h, pred_boxes.cpu().detach(), 
                                                                            self.ignore_threshold)
             mask, noobj_mask = mask.cuda(), noobj_mask.cuda()
             tx, ty, tw, th = tx.cuda(), ty.cuda(), tw.cuda(), th.cuda()
             tconf, tcls = tconf.cuda(), tcls.cuda()
+            scales = scales.cuda()
             #  losses.
-            loss_x = self.mse_loss(x * mask, tx * mask) / (2 * n_obj)
-            loss_y = self.mse_loss(y * mask, ty * mask) / (2 * n_obj)
-            loss_w = self.mse_loss(w * mask, tw * mask) / (2 * n_obj)
-            loss_h = self.mse_loss(h * mask, th * mask) / (2 * n_obj)
+            loss_x = scales * self.mse_loss(x * mask, tx * mask) / (2 * n_obj)
+            loss_y = scales * self.mse_loss(y * mask, ty * mask) / (2 * n_obj)
+            loss_w = scales * self.mse_loss(w * mask, tw * mask) / (2 * n_obj)
+            loss_h = scales * self.mse_loss(h * mask, th * mask) / (2 * n_obj)
             loss_conf = self.bce_loss(conf * mask, mask) / n_obj + \
                 0.2 * self.bce_loss(conf * noobj_mask, noobj_mask * 0.0) / n_obj
             loss_cls = self.bce_loss(pred_cls[mask == 1], tcls[mask == 1]) / n_obj
@@ -112,6 +113,7 @@ class YOLOLoss(nn.Module):
         th = torch.zeros(bs, self.num_anchors, in_h, in_w, requires_grad=False)
         tconf = torch.zeros(bs, self.num_anchors, in_h, in_w, requires_grad=False)
         tcls = torch.zeros(bs, self.num_anchors, in_h, in_w, self.num_classes, requires_grad=False)
+        scales = torch.zeros(bs, self.num_anchors, in_h, in_w, requires_grad=False)
         for b in range(bs):
             box_p = pred_box[b].view(-1, 4)
             for t in range(target.shape[1]):
@@ -153,5 +155,6 @@ class YOLOLoss(nn.Module):
                 tconf[b, best_n, gj, gi] = best_conf
                 # One-hot encoding of label
                 tcls[b, best_n, gj, gi, int(target[b, t, 0])] = 1
+                scales[b, best_n, gj, gi] = 2 - target[b, t, 3] * target[b, t, 4]
 
-        return n_obj, mask, noobj_mask, tx, ty, tw, th, tconf, tcls
+        return n_obj, mask, noobj_mask, tx, ty, tw, th, tconf, tcls, scales
