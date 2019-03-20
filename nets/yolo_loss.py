@@ -77,10 +77,10 @@ class YOLOLoss(nn.Module):
             tconf, tcls = tconf.cuda(), tcls.cuda()
             scales = scales.cuda()
             #  losses.
-            loss_x = scales * self.mse_loss(x * mask, tx * mask) / (2 * n_obj)
-            loss_y = scales * self.mse_loss(y * mask, ty * mask) / (2 * n_obj)
-            loss_w = scales * self.mse_loss(w * mask, tw * mask) / (2 * n_obj)
-            loss_h = scales * self.mse_loss(h * mask, th * mask) / (2 * n_obj)
+            loss_x = self.mse_loss(x * scales, tx * scales) / (2 * n_obj)
+            loss_y = self.mse_loss(y * scales, ty * scales) / (2 * n_obj)
+            loss_w = self.mse_loss(w * scales, tw * scales) / (2 * n_obj)
+            loss_h = self.mse_loss(h * scales, th * scales) / (2 * n_obj)
             loss_conf = self.bce_loss(conf * mask, mask) / n_obj + \
                 0.2 * self.bce_loss(conf * noobj_mask, noobj_mask * 0.0) / n_obj
             loss_cls = self.bce_loss(pred_cls[mask == 1], tcls[mask == 1]) / n_obj
