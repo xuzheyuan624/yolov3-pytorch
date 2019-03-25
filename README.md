@@ -79,7 +79,6 @@ You can test a image by:
 You can alse detect a video or run a real-time detection by 
 ```python main.py demo --name=coco --video=path```
 if ```video=None```, it's a real-time detection
-## Contact
-If you have questions or suggestions, you can publish issues or contact with me at [xuzheyuan624@163.com](xuzheyuan624@163.com)
+
 
 
